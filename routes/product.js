@@ -16,6 +16,12 @@ router.get('/all/:category?/:item?', async (req, res) => {
   res.json(result);
 })
 
+router.get('/allProduct/:category?/:item?', async (req, res) => {
+  const { category, item } = req.params;
+  const result = await productService.findAllByCateItem(category, item);
+  res.json(result);
+})
+
 router.get('/:id', async function (req, res, next) {
   const { id } = req.params;
   const result = await productService.findById(id);
@@ -29,7 +35,8 @@ router.post('/create', upload.single('image'), async (req, res, next) => {
   res.json(result);
 })
 
-router.post('/update/:id', auth.ensureSignedIn, async (req, res, next) => {
+// auth.ensureSignedIn,
+router.post('/update/:id', async (req, res, next) => {
   const {id} = req.params 
   const newProduct = req.body
   const result = await productService.update(id, newProduct) 

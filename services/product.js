@@ -17,76 +17,102 @@ const mongoose = require('mongoose')
 // }
 
 const findById = async (id) => {
-  try {
-    const product = await Products.findById(id).populate(['color','size', 'category', 'item'])
-    return {
-      success: true,
-      data: product
-    };
-  } catch (err) {
-    return {
-      success: false,
-      error: err.message
-    }
-  }
+  
+    const product = await Products.aggregate([
+      {
+        $match: { _id: mongoose.Types.ObjectId(id) },
+      },
+      {
+        $lookup: {
+          from: "sizes",
+          localField: "_id",
+          foreignField: "product",
+          as: "sizes"
+        },
+      },
+      {
+        $lookup: {
+          from: "colors",
+          localField: "_id",
+          foreignField: "product",
+          as: "colors"
+        }
+      }
+    ])
+    return product
 }
+
+// const findById = async (id) => {
+//   try {
+//     const product = await Products.findById(id).populate(['color','size', 'category', 'item'])
+//     return {
+//       success: true,
+//       data: product
+//     };
+//   } catch (err) {
+//     return {
+//       success: false,
+//       error: err.message
+//     }
+//   }
+// }
 // ['color','size']
 
-// const findAll = async (category = '', item = '') => {
-//   let matchCond = {};
-//   if(category) matchCond['category'] = mongoose.Types.ObjectId(category)
-//   if(item) matchCond['item'] = mongoose.Types.ObjectId(item)
+const findAllByCateItem = async (category = '', item = '') => {
+  let matchCond = {};
+  if(category) matchCond['category'] = mongoose.Types.ObjectId(category)
+  if(item) matchCond['item'] = mongoose.Types.ObjectId(item)
 
-//   const products = await Products.aggregate([
-//     {
-//       "$match": matchCond
-//     },
-//     {
-//       $lookup: {
-//         from: "sizes",
-//         localField: "_id",
-//         foreignField: "product",
-//         as: "sizes"
-//       },
+  const products = await Products.aggregate([
+    {
+      "$match": matchCond
+    },
+    {
+      $lookup: {
+        from: "sizes",
+        localField: "_id",
+        foreignField: "product",
+        as: "sizes"
+      },
 
-//     },
-//     {
-//       $lookup: {
-//         from: "colors",
-//         localField: "_id",
-//         foreignField: "product",
-//         as: "colors"
-//       },
+    },
+    {
+      $lookup: {
+        from: "colors",
+        localField: "_id",
+        foreignField: "product",
+        as: "colors"
+      },
 
-//     },
-//     {
-//       $lookup: {
-//         from: "categories",
-//         localField: "category",
-//         foreignField: "_id",
-//         as: "category"
-//       },
-//     },
-//     {
+    },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "category",
+        foreignField: "_id",
+        as: "category"
+      },
+    },
+    {
 
-//       $lookup: {
-//         from: "items",
-//         localField: "item",
-//         foreignField: "_id",
-//         as: "item"
-//       }
-//     },
-//     { "$unwind": "$category" },
-//     { "$unwind": "$item" },
-//     // { "$unwind": "$colors" },
-//     // { "$unwind": "$sizes" }
-//   ])
+      $lookup: {
+        from: "items",
+        localField: "item",
+        foreignField: "_id",
+        as: "item"
+      }
+    },
+    { "$unwind": "$category" },
+    { "$unwind": "$item" },
+    // { "$unwind": "$colors" },
+    // { "$unwind": "$sizes" }
+  ])
 
-//   if (!products?.length)
-//     return []
+  if (!products?.length)
+    return []
 
-//   return products
-// }
+  return products
+}
 const findAll = async (req,res) => {
   try{
     const product = await Products.find().populate(['color','size', 'category', 'item'])
@@ -131,16 +157,35 @@ const create = async (newProduct,file) => {
   }
 }
 
-const update = async (id, newProduct) => {
+const update = async (id, newProduct,file) => {
   try {
     const product = await Products.findById(id)
+    
     product.title = newProduct.title
     product.price = newProduct.price
     product.category = newProduct.category
     product.item = newProduct.item
+    product.color = newProduct.color
+    product.size = newProduct.size
     product.user = newProduct.user
-    product.imageUrl = newProduct.imageUrl
-    await product.save()
+    
+    let images = ''
+    if(file){
+      images = file;
+    }else{
+      images = ''
+    }
+    const newData = {
+      title: product.title,
+      price: product.price,
+      category: product.category,
+      item: product.item,
+      image: product.images,
+      desc: product.desc,
+      size: product.size,
+      color: product.color
+    }
+    await product.save(newData)
     return {
       success: true,
       data: product
@@ -173,5 +218,6 @@ module.exports = {
   update,
   remove,
   findAll,
-  create
+  create,
+  findAllByCateItem
 }
