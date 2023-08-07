@@ -4,6 +4,7 @@ const auth = require('../middlewares/auth');
 const { } = require('../schemas');
 var router = express.Router();
 const cardService = require('../services/card');
+const Cards = require('../models/cards');
 
 // all users
 router.get('/all', async (req, res) => {
@@ -35,7 +36,14 @@ router.post('/update/:id', async (req, res, next) => {
 
 router.post('/delete/:id', async (req, res, next) => {
   const {id} = req.params
+  console.log(id);
   const result = await cardService.remove(id);
+  res.json(result);
+})
+
+router.post('/delete/userid/:id', async function (req, res, next) {
+  const {id} = req.params;
+  const result = await cardService.deleteCardByUserId(id);
   res.json(result);
 })
 

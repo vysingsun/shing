@@ -11,7 +11,8 @@ router.get('/all', async (req, res) => {
   res.json(result)
 })
 
-router.get('/:id', auth.ensureSignedIn, async function (req, res, next) {
+// auth.ensureSignedIn,
+router.get('/:id', async function (req, res, next) {
   const { id } = req.params;
   const result = await itemService.findById(id);
   res.json(result);

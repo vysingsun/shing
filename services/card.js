@@ -67,6 +67,7 @@ const update = async (id, newCard) => {
 
 const remove = async (id) => {
   try{
+    console.log(id);
     await Cards.deleteOne({_id:id})
     return {
       success : true,
@@ -80,10 +81,27 @@ const remove = async (id) => {
   }
 }
 
+const deleteCardByUserId = async (userId) => {
+  try {
+    console.log(userId);
+    await Cards.findOneAndDelete({user:userId})
+    return {
+      success : true,
+      data : "Cards have deleted by userId!!"
+    }
+  } catch (error) {
+    return{
+      success : false,
+      error : error.message
+    }
+  }
+}
+
 module.exports = {
   findById,
   update,
   remove,
   findAll,
-  create
+  create,
+  deleteCardByUserId
 }
